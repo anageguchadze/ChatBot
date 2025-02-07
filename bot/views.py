@@ -1,32 +1,32 @@
 import json
 import spacy
-from django.http import JsonResponse
+from django.shortcuts import render
+from django.http import JsonResponse, HttpResponseNotAllowed
 
-# ჩატვირთე ინგლისური NLP მოდული
+# NLP მოდული
 nlp = spacy.load("en_core_web_sm")
 
 def simple_bot_logic(user_message):
-    """ჩათბოტის პასუხები ინგლისურად"""
+    """მარტივი ჩათბოტის პასუხები"""
     responses = {
         "hello": "Hello! How can I assist you? 😊",
         "how are you": "I'm good, thanks! What about you?",
-        "what can you do?": "I'm a chatbot, I can answer your questions!",
         "bye": "Goodbye! Have a great day! 👋",
     }
+    return responses.get(user_message.lower(), "Sorry, I didn't understand that. 🤔")
 
-    user_message = user_message.lower()
-    return responses.get(user_message, "Sorry, I didn't understand that. 🤔")
+def chat_view(request):
+    """ჩათბოტის HTML გვერდი"""
+    return render(request, "chat.html")
 
 def chatbot_response(request):
-    """ჩათბოტის მთავარი ფუნქცია"""
+    """ჩათბოტის პასუხი POST მეთოდზე"""
     if request.method == "POST":
         data = json.loads(request.body)
         user_message = data.get("message", "")
-
-        # NLP დამუშავება
-        doc = nlp(user_message)
-
-        # პასუხის გენერირება
         bot_reply = simple_bot_logic(user_message)
-
         return JsonResponse({"response": bot_reply})
+    
+    # GET მოთხოვნის შემთხვევაში დავაბრუნოთ 405 (Method Not Allowed)
+    elif request.method == "GET":
+        return HttpResponseNotAllowed("Only POST requests are allowed.")
